@@ -127,6 +127,7 @@ function next(element) {
   let y = element.cellIndex;
   let bombs = nearBombs(x, y);
   element.classList.add("revealed", `v${bombs}`);
+  element.classList.remove("flag");
   switch (bombs) {
     case 0:
       for (let cell of getNeighbors(x, y))
