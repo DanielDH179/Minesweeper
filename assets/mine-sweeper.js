@@ -5,7 +5,7 @@
 /**
  * @license MIT
  * @author DanielDH179
- * @version 1.0.0
+ * @version 1.0.1
  */
 
 // HTML elements
@@ -76,10 +76,7 @@ function newGame() {
     for (let j = 0; j < height; j++) {
       let cell = document.createElement("td");
       cell.addEventListener("click", reveal);
-      cell.addEventListener("contextmenu", (event) => {
-        event.preventDefault();
-        if (!cell.className.includes("revealed")) cell.classList.toggle("flag");
-      });
+      cell.addEventListener("contextmenu", placeFlag);
       if (Math.random() > sorter && bombCounter < totalBombs) {
         cell.innerText = uHidden;
         bombCounter++;
@@ -89,6 +86,13 @@ function newGame() {
     table.appendChild(row);
   }
   if (bombCounter < totalBombs) newGame();
+}
+
+// Flag right-clicked cell
+function placeFlag(event) {
+  event.preventDefault();
+  let cell = event.target;
+  if (!cell.className.includes("revealed")) cell.classList.toggle("flag");
 }
 
 // Check clicked cell
@@ -160,6 +164,7 @@ function endGame(solution) {
   const cells = document.querySelectorAll("td");
   for (let cell of cells) {
     cell.removeEventListener("click", reveal);
+    cell.removeEventListener("contextmenu", placeFlag);
     cell.classList.remove("flag");
     if (cell.innerText === uHidden) cell.innerText = uBomb;
     else if (solution) next(cell);
