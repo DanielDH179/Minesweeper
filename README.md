@@ -2,10 +2,6 @@
 
 Classic Minesweeper game implementation
 
-## License
-
-[![Licence](https://img.shields.io/github/license/Ileriayo/markdown-badges?style=for-the-badge)](./LICENSE)
-
 ## Social Media
 
 [![YouTube](https://img.shields.io/badge/YouTube-FF2300?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/@DanielDH179)
