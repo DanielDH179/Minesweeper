@@ -5,7 +5,7 @@
 /**
  * @license MIT
  * @author DanielDH179
- * @version 1.0.2
+ * @version 1.1.0
  */
 
 // HTML elements
@@ -14,12 +14,8 @@ const solveButton = document.querySelector("#solve");
 const table = document.querySelector("table");
 const timer = document.querySelector("#timer");
 const victory = document.querySelector("#victory");
-const debug = document.querySelector("#debug");
 
 // Unicode characters
-const uBlank = "\u{00020}";
-const uFlag = "\u{00060}";
-const uHidden = "\u{000A0}";
 const uBomb = "\u{1F4A3}";
 const uExplosion = "\u{1F4A5}";
 
@@ -41,6 +37,7 @@ const neighbors = [
 
 let totalBombs = Math.round(height * width * (1 - sorter));
 let interval = resetTimer(totalTime);
+let matrix = [];
 
 // Restart game timer
 function resetTimer(seconds) {
@@ -65,12 +62,8 @@ newGame();
 
 // Create new game
 function newGame() {
-  clearInterval(interval);
-  solveButton.addEventListener("click", solveGame);
-  interval = resetTimer(totalTime);
-  table.innerHTML = victory.innerHTML = "";
+  setup();
   let bombCounter = 0;
-  timer.classList.remove("v3");
   for (let i = 0; i < width; i++) {
     let row = document.createElement("tr");
     for (let j = 0; j < height; j++) {
@@ -78,14 +71,24 @@ function newGame() {
       cell.addEventListener("click", reveal);
       cell.addEventListener("contextmenu", placeFlag);
       if (Math.random() > sorter && bombCounter < totalBombs) {
-        cell.innerText = uHidden;
+        matrix.push(1);
         bombCounter++;
-      } else cell.innerText = uBlank;
+      } else matrix.push(0);
       row.appendChild(cell);
     }
     table.appendChild(row);
   }
   if (bombCounter < totalBombs) newGame();
+}
+
+// Setup variables
+function setup() {
+  clearInterval(interval);
+  solveButton.addEventListener("click", solveGame);
+  table.innerHTML = victory.innerHTML = "";
+  timer.classList.remove("v3");
+  interval = resetTimer(totalTime);
+  matrix.length = 0;
 }
 
 // Flag right-clicked cell
@@ -98,8 +101,9 @@ function placeFlag(event) {
 // Check clicked cell
 function reveal(event) {
   let clicked = event.target;
+  let [x, y] = getCoordinates(clicked);
   if (clicked.className.includes("flag")) return;
-  if (clicked.innerText !== uHidden) {
+  if (matrix[x * height + y] === 0) {
     next(clicked);
     checkRemaining();
   } else {
@@ -107,6 +111,27 @@ function reveal(event) {
     victory.innerText = "Nice try!";
     clicked.innerText = uExplosion;
   }
+}
+
+// Check neighbor cells
+function next(element) {
+  let [x, y] = getCoordinates(element);
+  let bombs = nearBombs(x, y);
+  element.classList.add("revealed", `v${bombs}`);
+  element.classList.remove("flag");
+  switch (bombs) {
+    case 0:
+      for (let cell of getNeighbors(x, y))
+        if (!cell.classList.contains("revealed")) next(cell);
+      break;
+    default:
+      element.innerText = bombs;
+  }
+}
+
+// Current cell coordinates
+function getCoordinates(element) {
+  return [element.parentNode.rowIndex, element.cellIndex];
 }
 
 // Check remaining cells
@@ -121,28 +146,13 @@ function checkRemaining() {
   }
 }
 
-// Check neighbor cells
-function next(element) {
-  let x = element.parentNode.rowIndex;
-  let y = element.cellIndex;
-  let bombs = nearBombs(x, y);
-  element.classList.add("revealed", `v${bombs}`);
-  element.classList.remove("flag");
-  switch (bombs) {
-    case 0:
-      for (let cell of getNeighbors(x, y))
-        if (!cell.classList.contains("revealed")) next(cell);
-      break;
-    default:
-      element.innerText = bombs;
-  }
-}
-
 // Count bombs next to current cell coordinates
 function nearBombs(x, y) {
   let bombCounter = 0;
-  for (let cell of getNeighbors(x, y))
-    if (cell.innerText === uHidden || cell.innerText === uBomb) bombCounter++;
+  for (let cell of getNeighbors(x, y)) {
+    let [nx, ny] = getCoordinates(cell);
+    if (matrix[nx * height + ny] === 1) bombCounter++;
+  }
   return bombCounter;
 }
 
@@ -167,12 +177,8 @@ function endGame(solution) {
     cell.removeEventListener("click", reveal);
     cell.removeEventListener("contextmenu", placeFlag);
     cell.classList.remove("flag");
-    if (cell.innerText === uHidden) cell.innerText = uBomb;
+    let [x, y] = getCoordinates(cell);
+    if (matrix[x * height + y] === 1) cell.innerText = uBomb;
     else if (solution) next(cell);
   }
-}
-
-// Debug mode
-function showDebug(text) {
-  debug.innerText = text;
 }
